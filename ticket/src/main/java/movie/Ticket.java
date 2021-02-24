@@ -23,7 +23,7 @@ public class Ticket {
         Created created = new Created();
         BeanUtils.copyProperties(this, created);
         created.publishAfterCommit();
-
+        movie.external.Review review = new movie.external.Review();
         // mappings goes here
         review.setBookingId(printed.getBookingId());
         review.setStatus("Waiting Review");
