@@ -421,22 +421,6 @@ phases:
                   image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                   ports:
                     - containerPort: 8080
-                  readinessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 10
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 10
-                  livenessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 120
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 5
         EOF
 cache:
   paths:
@@ -444,12 +428,9 @@ cache:
 
 ```
 
-- 서비스 이미지
-<img width="1655" alt="aws_ecr_team" src="https://user-images.githubusercontent.com/60732832/108799930-0ce8cf80-75d5-11eb-97e9-3e47f8a73595.png">
-
 - Pipeline
 
-![aws_team_codebuild](https://user-images.githubusercontent.com/60732832/108794185-a958a500-75c8-11eb-9a99-8d6129053774.png)
+<img width="979" alt="스크린샷 2021-02-24 오후 5 38 55" src="https://user-images.githubusercontent.com/28583602/108972947-2d915200-76c7-11eb-9ebf-1d3171473071.png">
 
 ## Zero-downtime deploy(Readiness Probe)
 
@@ -471,7 +452,7 @@ readinessProbe:
 
 ## Self-healing(Liveness Probe)
 
-- buildspec.yaml 파일에 Liveness Probe 추가
+- review/buildspec.yaml 파일에 Liveness Probe 추가
 
 ```
   livenessProbe:
@@ -484,7 +465,7 @@ readinessProbe:
     failureThreshold: 5
 
 ```
-<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 30" src="https://user-images.githubusercontent.com/28583602/108803416-f4c97e00-75dd-11eb-9663-74bcaf27ddbf.png">
+<img width="1746" alt="스크린샷 2021-02-24 오후 5 59 22" src="https://user-images.githubusercontent.com/28583602/108975630-09834000-76ca-11eb-9424-65a24fd2b274.png">
 
 ## Config Map
 
