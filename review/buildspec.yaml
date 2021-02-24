@@ -80,12 +80,6 @@ phases:
                   image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skccuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                   ports:
                     - containerPort: 8080
-                  env:
-                    - name: NAME
-                      valueFrom:
-                      configMapKeyRef:
-                        name: moviecm
-                        key: text1
         EOF
 cache:
   paths:
