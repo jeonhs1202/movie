@@ -434,20 +434,52 @@ cache:
 
 ## Zero-downtime deploy(Readiness Probe)
 
-- buildspec.yaml 파일에 Readiness Probe 추가
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c50 -t120S -r10 --content-type "application/json" 'http://review:8080/reviews POST {"score":"3"}'
 
 ```
-readinessProbe:
-  httpGet:
-    path: /abc
-    port: 8080
-  initialDelaySeconds: 10
-  timeoutSeconds: 2
-  periodSeconds: 5
-  failureThreshold: 10
+
+새버전으로 이미지 배포
 
 ```
-<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 07" src="https://user-images.githubusercontent.com/28583602/108803393-e8ddbc00-75dd-11eb-964d-cfd5d78cdfdd.png">
+kubectl set image deployment.apps/review review=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skccuser17-review:8140c40acfe25a86482587b4449ee01cafdf17cd -n movie
+```
+
+
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+![image](https://user-images.githubusercontent.com/28583602/108991383-60dddc00-76db-11eb-8254-9c1ee082d32c.png)
+
+- review / buildspec.yaml 파일에 Readiness Probe 추가
+
+
+
+```
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 10
+
+```
+
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c50 -t120S -r10 --content-type "application/json" 'http://review:8080/reviews POST {"score":"3"}'
+
+```
+
+새버전으로 이미지 배포
+
+```
+kubectl set image deployment.apps/review review=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skccuser17-review:8140c40acfe25a86482587b4449ee01cafdf17cd -n movie
+```
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+
+<img width="456" alt="스크린샷 2021-02-24 오후 8 05 12" src="https://user-images.githubusercontent.com/28583602/108991559-9c78a600-76db-11eb-83eb-a31113f43618.png">
 
 
 ## Self-healing(Liveness Probe)
