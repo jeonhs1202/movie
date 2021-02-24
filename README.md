@@ -421,22 +421,6 @@ phases:
                   image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                   ports:
                     - containerPort: 8080
-                  readinessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 10
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 10
-                  livenessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 120
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 5
         EOF
 cache:
   paths:
@@ -446,7 +430,7 @@ cache:
 
 - Pipeline
 
-<img width="850" alt="스크린샷 2021-02-24 오후 5 10 04" src="https://user-images.githubusercontent.com/28583602/108967660-2405eb00-76c3-11eb-9aef-28c6b3c85187.png">
+<img width="979" alt="스크린샷 2021-02-24 오후 5 38 55" src="https://user-images.githubusercontent.com/28583602/108972947-2d915200-76c7-11eb-9ebf-1d3171473071.png">
 
 ## Zero-downtime deploy(Readiness Probe)
 
