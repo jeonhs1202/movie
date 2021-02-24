@@ -2,16 +2,12 @@ package movie;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
 @Entity
 @Table(name="Review_table")
 public class Review {
-
-    @Value("${WEATHER}")
-    private String weathertest;
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
@@ -20,7 +16,7 @@ public class Review {
     private Integer score;
     private String contents;
     private String status;
-    private String weather =weathertest;
+    private String weather = System.getenv("WEATHER");;
 
     @PostPersist
     public void onPostPersist(){
