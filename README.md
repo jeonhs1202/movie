@@ -452,7 +452,7 @@ readinessProbe:
 
 ## Self-healing(Liveness Probe)
 
-- buildspec.yaml 파일에 Liveness Probe 추가
+- review/buildspec.yaml 파일에 Liveness Probe 추가
 
 ```
   livenessProbe:
@@ -465,7 +465,7 @@ readinessProbe:
     failureThreshold: 5
 
 ```
-<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 30" src="https://user-images.githubusercontent.com/28583602/108803416-f4c97e00-75dd-11eb-9663-74bcaf27ddbf.png">
+<img width="1746" alt="스크린샷 2021-02-24 오후 5 59 22" src="https://user-images.githubusercontent.com/28583602/108975630-09834000-76ca-11eb-9424-65a24fd2b274.png">
 
 ## Config Map
 
