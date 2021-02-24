@@ -434,20 +434,52 @@ cache:
 
 ## Zero-downtime deploy(Readiness Probe)
 
-- buildspec.yaml 파일에 Readiness Probe 추가
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c50 -t120S -r10 --content-type "application/json" 'http://review:8080/reviews POST {"score":"3"}'
 
 ```
-readinessProbe:
-  httpGet:
-    path: /abc
-    port: 8080
-  initialDelaySeconds: 10
-  timeoutSeconds: 2
-  periodSeconds: 5
-  failureThreshold: 10
+
+새버전으로 이미지 배포
 
 ```
-<img width="1114" alt="스크린샷 2021-02-23 오후 1 49 07" src="https://user-images.githubusercontent.com/28583602/108803393-e8ddbc00-75dd-11eb-964d-cfd5d78cdfdd.png">
+kubectl set image deployment.apps/review review=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skccuser17-review:8140c40acfe25a86482587b4449ee01cafdf17cd -n movie
+```
+
+
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+![image](https://user-images.githubusercontent.com/28583602/108991383-60dddc00-76db-11eb-8254-9c1ee082d32c.png)
+
+- review / buildspec.yaml 파일에 Readiness Probe 추가
+
+
+
+```
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 10
+
+```
+
+- seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c50 -t120S -r10 --content-type "application/json" 'http://review:8080/reviews POST {"score":"3"}'
+
+```
+
+새버전으로 이미지 배포
+
+```
+kubectl set image deployment.apps/review review=496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skccuser17-review:8140c40acfe25a86482587b4449ee01cafdf17cd -n movie
+```
+- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+
+<img width="456" alt="스크린샷 2021-02-24 오후 8 05 12" src="https://user-images.githubusercontent.com/28583602/108991559-9c78a600-76db-11eb-83eb-a31113f43618.png">
 
 
 ## Self-healing(Liveness Probe)
@@ -465,26 +497,26 @@ readinessProbe:
     failureThreshold: 5
 
 ```
-<img width="1746" alt="스크린샷 2021-02-24 오후 5 59 22" src="https://user-images.githubusercontent.com/28583602/108975630-09834000-76ca-11eb-9424-65a24fd2b274.png">
+<img width="707" alt="스크린샷 2021-02-24 오후 7 26 54" src="https://user-images.githubusercontent.com/28583602/108987108-42c1ad00-76d6-11eb-900b-7ffd2b87df59.png">
 
 ## Config Map
 
-- deployment.yml에 env 추가
+- review / deployment.yml에 env 추가
 
 
 ```
 # deployment.yaml
 
-  env:
-    - name: NAME
-      valueFrom:
-	configMapKeyRef:
-	  name: moviecm
-	  key: text1
+          env:
+            - name: WEATHER
+              valueFrom:
+                configMapKeyRef:
+                  name: moviecm
+                  key: text1
 
 ```
 
-- 예매와 동시에 환경변수로 설정한 NAME이 들어가도록 코드를 변경
+- Reviw 생성과 동시에 환경변수로 설정한 WEATHER이 들어가도록 코드를 변경
 
 ```
 @Id
@@ -492,7 +524,7 @@ readinessProbe:
 
 ...
 
-private String name = System.getenv("NAME");
+    private String weather = System.getenv("WEATHER");;
 
 ```
 - configmap.yaml 작성
@@ -504,17 +536,17 @@ metadata:
   name: moviecm
   namespace: movie
 data:
-  text1: HyesunJeon
+  text1: Sunny
 
 ```
 
-- book pod에 들어가서 환경변수 확인
+- review pod에 들어가서 환경변수 확인
 
-<img width="1118" alt="스크린샷 2021-02-23 오후 7 02 08" src="https://user-images.githubusercontent.com/28583602/108828012-a3cf7f00-7609-11eb-952e-3cfb6e429bae.png">
+<img width="1110" alt="스크린샷 2021-02-24 오후 7 33 10" src="https://user-images.githubusercontent.com/28583602/108987875-23774f80-76d7-11eb-9ff9-b3dd520c4f13.png">
 
-- 예매와 동시에 name에 환경변수 적용 
+- Review 생성과 동시에 weather 환경변수 적용 
 
-<img width="1483" alt="스크린샷 2021-02-23 오후 7 03 21" src="https://user-images.githubusercontent.com/28583602/108828129-ceb9d300-7609-11eb-9f9d-228ca82b8f96.png">
+<img width="1058" alt="스크린샷 2021-02-24 오후 7 34 04" src="https://user-images.githubusercontent.com/28583602/108987976-430e7800-76d7-11eb-8fb6-dba436014bf0.png">
 
 
 
