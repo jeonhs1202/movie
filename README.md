@@ -444,12 +444,9 @@ cache:
 
 ```
 
-- 서비스 이미지
-<img width="1655" alt="aws_ecr_team" src="https://user-images.githubusercontent.com/60732832/108799930-0ce8cf80-75d5-11eb-97e9-3e47f8a73595.png">
-
 - Pipeline
 
-![aws_team_codebuild](https://user-images.githubusercontent.com/60732832/108794185-a958a500-75c8-11eb-9a99-8d6129053774.png)
+<img width="850" alt="스크린샷 2021-02-24 오후 5 10 04" src="https://user-images.githubusercontent.com/28583602/108967660-2405eb00-76c3-11eb-9aef-28c6b3c85187.png">
 
 ## Zero-downtime deploy(Readiness Probe)
 
