@@ -4,7 +4,7 @@ env:
   variables:
     _PROJECT_NAME: "ticket"
     _PROJECT_DIR: "ticket"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v7"
+    CODEBUILD_RESOLVED_SOURCE_VERSION: "v1"
 
 phases:
   install:
