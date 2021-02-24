@@ -4,7 +4,6 @@ env:
   variables:
     _PROJECT_NAME: "book"
     _PROJECT_DIR: "book"
-    CODEBUILD_RESOLVED_SOURCE_VERSION : "v1"
 
 phases:
   install:

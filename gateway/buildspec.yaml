@@ -4,7 +4,6 @@ env:
   variables:
     _PROJECT_NAME: "gateway"
     _PROJECT_DIR: "gateway"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v1"
 
 phases:
   install:
