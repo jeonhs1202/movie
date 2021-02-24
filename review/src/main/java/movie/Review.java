@@ -2,6 +2,8 @@ package movie;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 
 @Entity
