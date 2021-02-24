@@ -338,14 +338,13 @@ http PATCH http://localhost:8088/reviews/1 score=10 contents="VeryGood"
 각 구현체들은 Amazon ECR(Elastic Container Registry)에 구성되었고, 사용한 CI/CD 플랫폼은 AWS Codebuild며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다. 
 
 ```
-# ticket/buildspec.yaml
+# review/buildspec.yaml
 version: 0.2
 
 env:
   variables:
-    _PROJECT_NAME: "ticket"
-    _PROJECT_DIR: "ticket"
-    CODEBUILD_RESOLVED_SOURCE_VERSION: "v3"
+    _PROJECT_NAME: "review"
+    _PROJECT_DIR: "review"
 
 phases:
   install:
@@ -372,11 +371,11 @@ phases:
       - echo Building the Docker image...
       - cd $_PROJECT_DIR
       - mvn package -Dmaven.test.skip=true
-      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION  .
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION  .
   post_build:
     commands:
       - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo connect kubectl
       - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
       - kubectl config set-credentials admin --token="$KUBE_TOKEN"
@@ -419,13 +418,30 @@ phases:
             spec:
               containers:
                 - name: $_PROJECT_NAME
-                  image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skteam03-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+                  image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                   ports:
                     - containerPort: 8080
+                  readinessProbe:
+                    httpGet:
+                      path: /actuator/health
+                      port: 8080
+                    initialDelaySeconds: 10
+                    timeoutSeconds: 2
+                    periodSeconds: 5
+                    failureThreshold: 10
+                  livenessProbe:
+                    httpGet:
+                      path: /actuator/health
+                      port: 8080
+                    initialDelaySeconds: 120
+                    timeoutSeconds: 2
+                    periodSeconds: 5
+                    failureThreshold: 5
         EOF
 cache:
   paths:
     - "/root/.m2/**/*"
+
 ```
 
 - 서비스 이미지
