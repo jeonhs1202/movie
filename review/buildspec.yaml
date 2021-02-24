@@ -80,22 +80,12 @@ phases:
                   image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/skccuser17-$_PROJECT_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
                   ports:
                     - containerPort: 8080
-                  readinessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 10
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 10
-                  livenessProbe:
-                    httpGet:
-                      path: /actuator/health
-                      port: 8080
-                    initialDelaySeconds: 120
-                    timeoutSeconds: 2
-                    periodSeconds: 5
-                    failureThreshold: 5
+                  env:
+                    - name: NAME
+                      valueFrom:
+                      configMapKeyRef:
+                        name: moviecm
+                        key: text1
         EOF
 cache:
   paths:

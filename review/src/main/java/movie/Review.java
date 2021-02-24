@@ -8,6 +8,9 @@ import java.util.List;
 @Table(name="Review_table")
 public class Review {
 
+    @Value("${WEATHER}")
+    private String weathertest;
+
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
@@ -15,6 +18,7 @@ public class Review {
     private Integer score;
     private String contents;
     private String status;
+    private String weather =weathertest;
 
     @PostPersist
     public void onPostPersist(){
