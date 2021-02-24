@@ -74,7 +74,13 @@ public class Review {
     public void setStatus(String status) {
         this.status = status;
     }
+    public String getWeather() {
+        return weather;
+    }
 
+    public void setWeather(String weather) {
+        this.status = weather;
+    }
 
 
 
