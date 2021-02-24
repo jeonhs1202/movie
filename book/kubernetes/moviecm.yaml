@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moviecm
+  namespace: movie
+data:
+  text1: HyesunJeon
