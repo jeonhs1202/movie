@@ -426,6 +426,7 @@ kubectl set image deployment.apps/review review=496278789073.dkr.ecr.ap-northeas
 
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+- 
 ![image](https://user-images.githubusercontent.com/28583602/108991383-60dddc00-76db-11eb-8254-9c1ee082d32c.png)
 
 - review / buildspec.yaml 파일에 Readiness Probe 추가
