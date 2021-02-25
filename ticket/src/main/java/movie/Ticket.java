@@ -25,7 +25,7 @@ public class Ticket {
         created.publishAfterCommit();
         movie.external.Review review = new movie.external.Review();
         // mappings goes here
-        review.setBookingId(printed.getBookingId());
+        review.setBookingId(created.getBookingId());
         review.setStatus("Waiting Review");
         TicketApplication.applicationContext.getBean(movie.external.ReviewService.class)
             .create(review);
