@@ -16,7 +16,6 @@ public class Review {
     private Integer score;
     private String contents;
     private String status;
-    private String weather = System.getenv("WEATHER");;
 
     @PostPersist
     public void onPostPersist(){
@@ -75,14 +74,5 @@ public class Review {
     public void setStatus(String status) {
         this.status = status;
     }
-    public String getWeather() {
-        return weather;
-    }
-
-    public void setWeather(String weather) {
-        this.status = weather;
-    }
-
-
 
 }
