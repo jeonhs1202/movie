@@ -16,12 +16,11 @@ spec:
     spec:
       containers:
         - name: review
-          image: username/review:latest
+          image: 496278789073.dkr.ecr.ap-northeast-2.amazonaws.com/skccuser17-review:c7ebdabb54b51794b470e812262389103d3731c6
           ports:
             - containerPort: 8080
-          env:
-            - name: NAME
-              valueFrom:
-              configMapKeyRef:
-                name: moviecm
-                key: text1
+          resources:
+            requests:
+              cpu: "300m"
+            limits:
+              cpu: "500m"

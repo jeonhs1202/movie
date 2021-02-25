@@ -62,11 +62,3 @@ spring:
         event-out:
           destination: movie
           contentType: application/json
-hystrix:
-  command:
-    # 전역설정
-    default:
-      execution.isolation.thread.timeoutInMilliseconds: 610
-feign:
-  hystrix:
-    enabled: true      
