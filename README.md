@@ -554,13 +554,29 @@ data:
 - Hystrix 를 설정: 요청처리 쓰레드에서 처리시간이 610 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 
 ```
-# application.yml in review service
+# pom.yml in Ticket service
+
+	<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+		<version>2.1.2.RELEASE</version>
+	</dependency>
+	<dependency>
+		<groupId>org.springframework.cloud</groupId>
+		<artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+		<version>2.1.2.RELEASE</version>
+	</dependency>
+
+# application.yml in Ticket service
     
 hystrix:
   command:
     # 전역설정
     default:
       execution.isolation.thread.timeoutInMilliseconds: 610
+feign:
+  hystrix:
+    enabled: true 
 
 ```
 
@@ -590,94 +606,74 @@ hystrix:
 * 60초 동안 실시
 
 ```
-$ siege -c50 -t60S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty":"3"}'
+# siege -c50 -t60S -r10 -v --content-type "application/json" 'http://ticket:8080/tickets POST {"bookingId":"3"}'
 
-** SIEGE 4.0.5
+** SIEGE 4.0.4
 ** Preparing 50 concurrent users for battle.
 The server is now under siege...
 
-HTTP/1.1 201     1.17 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     1.26 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     1.25 secs:     282 bytes ==> POST http://book:8080/books
 
-* 요청이 과도하여 CB를 동작함 요청을 차단
-
-HTTP/1.1 201     1.51 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.38 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     2.65 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.98 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.87 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.86 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.77 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.78 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.37 secs:     282 bytes ==> POST http://book:8080/books
-
-* 요청을 어느정도 돌려보내고나니, 기존에 밀린 일들이 처리되었고, 회로를 닫아 요청을 다시 받기 시작
-
-HTTP/1.1 201     2.43 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.49 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.57 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.53 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.45 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.55 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     0.51 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.38 secs:     282 bytes ==> POST http://book:8080/books
-
-* 다시 요청이 쌓이기 시작하여 건당 처리시간이 610 밀리를 살짝 넘기기 시작 => 회로 열기 => 요청 실패처리
-
-HTTP/1.1 500     2.65 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.98 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.86 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.78 secs:     247 bytes ==> POST http://book:8080/books
-
-* 생각보다 빨리 상태 호전됨 - (건당 (쓰레드당) 처리시간이 610 밀리 미만으로 회복) => 요청 수락
-
-HTTP/1.1 201     2.37 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.51 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.40 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.64 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.64 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.64 secs:     282 bytes ==> POST http://book:8080/books
-
-* 이후 이러한 패턴이 계속 반복되면서 시스템은 도미노 현상이나 자원 소모의 폭주 없이 잘 운영됨
-
-HTTP/1.1 201     2.38 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.34 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.13 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     2.54 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.33 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     2.54 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.74 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.73 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.24 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.31 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.36 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     2.39 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.38 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 500     1.80 secs:     247 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     2.38 secs:     282 bytes ==> POST http://book:8080/books
-HTTP/1.1 201     4.49 secs:     282 bytes ==> POST http://book:8080/books
+:
+:
+HTTP/1.1 201     5.32 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.22 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.23 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.19 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.07 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.11 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.16 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.12 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.24 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     5.26 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.21 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.28 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.26 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.23 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.24 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     5.41 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     5.46 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     5.57 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.46 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.28 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.25 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.15 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.20 secs:     254 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.39 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.39 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.37 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.37 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.39 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.40 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.40 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.38 secs:     820 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    30.42 secs:     820 bytes ==> POST http://ticket:8080/tickets
 
 
 :
 :
 
-Transactions:                   1030 hits
-Availability:                  62.05 %
-Elapsed time:                  59.83 secs
-Data transferred:               0.43 MB
-Response time:                  2.85 secs
-Transaction rate:              17.22 trans/sec
-Throughput:                     0.01 MB/sec
-Concurrency:                   48.99
-Successful transactions:        1030
-Failed transactions:             630
-Longest transaction:            5.20
-Shortest transaction:           0.01
+Lifting the server siege...
+Transactions:		          88 hits
+Availability:		       56.41 %
+Elapsed time:		       59.96 secs
+Data transferred:	        0.06 MB
+Response time:		       26.34 secs
+Transaction rate:	        1.47 trans/sec
+Throughput:		        0.00 MB/sec
+Concurrency:		       38.66
+Successful transactions:          88
+Failed transactions:	          68
+Longest transaction:	       30.43
+Shortest transaction:	        1.85
 
 ```
 
-- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 62% 가 성공하였고, 38%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌.
 
 - Retry 의 설정 (istio)
 - Availability 가 높아진 것을 확인 (siege)
@@ -691,21 +687,56 @@ Shortest transaction:           0.01
 ```
   resources:
     requests:
-      cpu: "300m"
+      cpu: "450m"
     limits:
       cpu: "500m"
 ```
 
-- 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+- Review 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 70프로를 넘어서면 replica 를 10개까지 늘려준다:
 
 ```
-kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
+ kubectl autoscale deploy review --min=1 --max=10 --cpu-percent=70 -n movie
 ```
 
-- CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+- CB 에서 했던 방식대로 워크로드를 1분 동안 걸어준다.
 
 ```
-siege -c50 -t120S -r10 --content-type "application/json" 'http://book:8080/books POST {"qty": "3"}'
+
+# siege -c20 -t60S -r10 -v --content-type "application/json" 'http://ticket:8080/tickets POST {"bookingId":"3"}'
+
+** SIEGE 4.0.4
+** Preparing 20 concurrent users for battle.
+The server is now under siege...
+HTTP/1.1 201     0.47 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     1.00 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     1.51 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     2.03 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     2.65 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     3.22 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     3.67 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     4.25 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     4.67 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.19 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     5.75 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     6.21 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     6.82 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     7.37 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     7.80 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     8.27 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500     8.89 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201     9.47 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.07 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.64 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.65 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.67 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.66 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.62 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.53 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.44 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.46 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.32 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.46 secs:     256 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.38 secs:     256 bytes ==> POST http://ticket:8080/tickets
 ```
 
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
@@ -717,36 +748,91 @@ kubectl get deploy payment -w
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 
 ```
-NAME      READY   UP-TO-DATE   AVAILABLE   AGE
-payment   1/1     1            1           81s
-payment   1/4     1            1           3m51s
-payment   1/8     4            1           4m6s
-payment   1/8     8            1           4m6s
-payment   1/9     8            1           4m21s
-payment   2/9     9            2           5m13s
-payment   3/9     9            3           5m18s
-payment   4/9     9            4           5m20s
-payment   5/9     9            5           5m28s
-payment   6/9     9            6           5m29s
-payment   7/9     9            7           5m29s
-payment   8/9     9            8           5m31s
-payment   9/9     9            9           5m42s
+#pod 확인
+
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/book-6c747ddd67-q9pnk      1/1     Running   0          19h
+pod/gateway-6c6479b547-svmfc   1/1     Running   0          19h
+pod/mypage-68c77cdd95-x67hz    1/1     Running   0          19h
+pod/payment-7bd57d5b5b-c5n2g   1/1     Running   0          19h
+pod/review-74766df9b-24srn     1/1     Running   0          2m46s
+pod/review-74766df9b-2bv4h     1/1     Running   0          3m2s
+pod/review-74766df9b-4l88g     1/1     Running   0          2m31s
+pod/review-74766df9b-4m27g     1/1     Running   0          2m46s
+pod/review-74766df9b-8gccq     1/1     Running   0          2m46s
+pod/review-74766df9b-c98g5     1/1     Running   0          4m32s
+pod/review-74766df9b-hvhcq     1/1     Running   0          3m2s
+pod/review-74766df9b-lqq8n     1/1     Running   0          2m46s
+pod/review-74766df9b-qb2l7     1/1     Running   0          3m2s
+pod/seige-8657d6b95c-qct6d     1/1     Running   0          19h
+pod/ticket-69f959dd64-x7htj    1/1     Running   0          9m1s
+
+#deploy 확인
+
+NAME     READY   UP-TO-DATE   AVAILABLE   AGE
+review   1/1     1            1           25s
+review   1/4     1            1           90s
+review   1/4     1            1           90s
+review   1/4     1            1           90s
+review   1/4     4            1           90s
+review   2/4     4            2           91s
+review   3/4     4            3           92s
+review   4/4     4            4           93s
+review   4/8     4            4           106s
+review   4/8     4            4           106s
+review   4/8     4            4           106s
+review   4/8     8            4           106s
+review   5/8     8            5           108s
+review   6/8     8            6           108s
+review   7/8     8            7           108s
+review   8/8     8            8           108s
+review   8/9     8            8           2m1s
+review   8/9     8            8           2m1s
+review   8/9     8            8           2m1s
+review   8/9     9            8           2m1s
+review   9/9     9            9           2m3s
 ```
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 
 ```
-Transactions:                    976 hits
-Availability:                  89.95 %
-Elapsed time:                 119.45 secs
-Data transferred:               0.29 MB
-Response time:                  0.61 secs
-Transaction rate:               8.17 trans/sec
-Throughput:                     0.00 MB/sec
-Concurrency:                    4.95
-Successful transactions:         976
-Failed transactions:             109
-Longest transaction:            0.79
-Shortest transaction:           0.41
+HTTP/1.1 201    10.93 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.89 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    10.93 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    10.95 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    10.97 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.00 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.97 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.98 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.04 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.00 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    11.10 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    11.15 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.23 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    11.29 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.25 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.18 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.18 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.16 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.12 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 500    11.13 secs:     249 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.01 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    11.00 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.92 secs:     258 bytes ==> POST http://ticket:8080/tickets
+HTTP/1.1 201    10.81 secs:     258 bytes ==> POST http://ticket:8080/tickets
+
+Lifting the server siege...
+Transactions:		          84 hits
+Availability:		       76.36 %
+Elapsed time:		       59.07 secs
+Data transferred:	        0.03 MB
+Response time:		       12.84 secs
+Transaction rate:	        1.42 trans/sec
+Throughput:		        0.00 MB/sec
+Concurrency:		       18.26
+Successful transactions:          84
+Failed transactions:	          26
+Longest transaction:	       11.29
+Shortest transaction:	        0.49
 ```
 
